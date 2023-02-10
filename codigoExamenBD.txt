@@ -1,0 +1,611 @@
+DROP TABLE EMISION;
+DROP TABLE TEMA;
+DROP TABLE RANKING;
+DROP TABLE SINGLE_V;
+DROP TABLE LP;
+DROP TABLE COLABO;
+DROP TABLE VINILO;
+
+DROP TABLE RADIO;
+DROP TABLE ESTUDIO;
+DROP TABLE DISCOGRAFICA;
+DROP TABLE MIEMBRO;
+DROP TABLE GRUPO;
+DROP TABLE EMPRESAGRAFICA;
+
+
+    -- XXXXXXXXXXXXXX --   
+    -- XXX TABLAS XXX --
+    -- XXXXXXXXXXXXXX --   
+
+    --// Simples \\--
+
+CREATE TABLE RADIO(
+    nom_radio VARCHAR2(20) NOT NULL,
+    dir_radio VARCHAR2(20) NOT NULL,
+    web VARCHAR2(20) NOT NULL,
+    email VARCHAR2(20) NOT NULL,
+    tel_radio NUMBER(9) NOT NULL,
+
+    CONSTRAINT pk_nomr PRIMARY KEY (nom_radio)
+);
+
+CREATE TABLE GRUPO(
+    nom_grupo VARCHAR2(20) NOT NULL,
+    anyoFundacion DATE NOT NULL,
+    pais_grupo VARCHAR(20) NULL,
+    
+    CONSTRAINT pk_nomg PRIMARY KEY (nom_grupo)
+);
+
+CREATE TABLE DISCOGRAFICA(
+    nom_dis VARCHAR2(20) NOT NULL,
+    tel_dis NUMBER(9) NOT NULL,
+    dir_dis VARCHAR2(50) NOT NULL,
+    pais_dis VARCHAR2(20) NOT NULL,
+    
+    CONSTRAINT pk_dicografica PRIMARY KEY (nom_dis)
+);
+
+CREATE TABLE ESTUDIO(
+    nom_est VARCHAR2(30) NOT NULL,
+    dir_est VARCHAR2(20) NOT NULL,
+    tel_est NUMBER(9) NOT NULL,
+    pais_est VARCHAR2(20) NOT NULL,
+    
+    CONSTRAINT pk_nome PRIMARY KEY (nom_est)
+);
+
+CREATE TABLE EMPRESAGRAFICA(
+    nom_eg VARCHAR2(20) NOT NULL,
+    dir_eg VARCHAR2(20) NULL,
+    pais_eg VARCHAR2(20) NOT NULL,
+    
+    CONSTRAINT pk_nomeg PRIMARY KEY (nom_eg)
+);
+
+
+    --// Compuestos \\--
+
+CREATE TABLE VINILO(
+    ISVN NUMBER(10) NOT NULL,
+    discografica VARCHAR2(20) NOT NULL,
+    fechaLanz DATE NOT NULL,
+    copiasVendidas_v NUMBER(10) NOT NULL,
+    grupo_v VARCHAR2(20) NOT NULL,
+    empresaGrafica VARCHAR2(20) NULL,
+    
+    CONSTRAINT pk_isvn_vi PRIMARY KEY (ISVN),
+    
+    CONSTRAINT fk_discografica FOREIGN KEY (discografica) REFERENCES DISCOGRAFICA,
+    CONSTRAINT fk_grupo_vinilo FOREIGN KEY (grupo_v) REFERENCES GRUPO,
+    CONSTRAINT fk_empresaGrafica FOREIGN KEY (empresaGrafica) REFERENCES EMPRESAGRAFICA
+            ON DELETE SET NULL
+);
+
+CREATE TABLE LP(
+    ISVN NUMBER(10) NOT NULL,
+    titulo_LP VARCHAR2(20) NOT NULL,
+    copiasLanzamiento_LP NUMBER(8) NOT NULL,
+    
+    CONSTRAINT pk_isvn_lp PRIMARY KEY (ISVN),
+
+    CONSTRAINT fk_isvn_lp FOREIGN KEY (ISVN) REFERENCES VINILO (ISVN)
+            ON DELETE CASCADE
+);
+
+CREATE TABLE SINGLE_V(
+    ISVN NUMBER(10) NOT NULL,
+    ISVNLP NUMBER(10) NOT NULL,
+    
+    CONSTRAINT pk_isvn_s PRIMARY KEY (ISVN),
+    CONSTRAINT u_isvnpl_s UNIQUE (ISVNLP),
+w
+
+    CONSTRAINT fk_isvn_s FOREIGN KEY (ISVN) REFERENCES VINILO (ISVN) 
+            ON DELETE CASCADE,
+    CONSTRAINT fk_isvnlp_s FOREIGN KEY (ISVNLP) REFERENCES LP (ISVN)
+            ON DELETE CASCADE
+);
+
+CREATE TABLE RANKING(
+    anyo_r DATE NOT NULL,
+    semana_r NUMBER(2) NOT NULL,
+    primero_r NUMBER(10) NOT NULL,
+    segundo_r NUMBER(10) NOT NULL,
+    tercero_r NUMBER(10) NOT NULL,
+    
+    CONSTRAINT pk_ranking PRIMARY KEY (anyo_r,semana_r),
+    
+    CONSTRAINT fk_primero FOREIGN KEY (primero_r) REFERENCES SINGLE_V(ISVN)
+            ON DELETE CASCADE,
+    CONSTRAINT fk_segundo FOREIGN KEY (segundo_r) REFERENCES SINGLE_V(ISVN)
+            ON DELETE CASCADE,
+    CONSTRAINT fk_tercero FOREIGN KEY (tercero_r) REFERENCES SINGLE_V(ISVN)
+            ON DELETE CASCADE
+);
+
+CREATE TABLE TEMA(
+    cod_tema NUMBER(4) NOT NULL,
+    titulo_tema VARCHAR2(30) NOT NULL,
+    duracion_tema NUMBER(3) NOT NULL,
+    autor_tema VARCHAR2(30) NOT NULL,
+    estudio VARCHAR2(30) NULL,
+    LP NUMBER(10) NOT NULL,
+    cara_LP CHAR(1) NOT NULL,
+    pista_LP NUMBER(2) NOT NULL,
+    single_t NUMBER(10) NULL,
+    cara_single CHAR(1) DEFAULT 'A' NULL,
+    pista_single NUMBER(1) NULL,
+    
+    CONSTRAINT ck_cara_LP CHECK (cara_LP IN('A','B')),
+    CONSTRAINT ck_cara_single CHECK (cara_single IN('A','B')),
+    CONSTRAINT ck_pistaLP CHECK (pista_LP<13 AND pista_LP>0),
+    CONSTRAINT ck_pistaSingle CHECK (pista_single<3 AND pista_single>0),
+    CONSTRAINT ck_lp_single CHECK (LP != single_t),
+    CONSTRAINT ck_null CHECK ((single_t=NULL AND cara_single=NULL AND pista_single=NULL) OR (single_t!=NULL AND cara_single!=NULL AND pista_single!=NULL)),
+
+    
+    CONSTRAINT pk_cod_tema PRIMARY KEY (cod_tema),
+    
+    CONSTRAINT fk_estudio FOREIGN KEY (estudio) REFERENCES ESTUDIO
+            ON DELETE SET NULL,
+    CONSTRAINT fk_LP_tema FOREIGN KEY (LP) REFERENCES LP(ISVN)
+            ON DELETE CASCADE,
+    CONSTRAINT fk_single_tema FOREIGN KEY (single_t) REFERENCES SINGLE_V (ISVN)
+            ON DELETE SET NULL
+);
+
+CREATE TABLE EMISION(
+    fechaHora DATE NOT NULL,
+    radio VARCHAR2(20) NOT NULL,
+    tema NUMBER(4) NOT NULL,
+    
+    CONSTRAINT pk_fechahora PRIMARY KEY (fechaHora,radio),
+    
+    CONSTRAINT fk_radio FOREIGN KEY (radio) REFERENCES RADIO,
+    CONSTRAINT fk_tema FOREIGN KEY (tema) REFERENCES TEMA
+);
+
+
+
+
+
+    -- XXXXXXXXXXXXXX --   
+    -- XXX TABLAS XXX --
+    -- XXXXXXXXXXXXXX --
+
+    --Radio
+INSERT INTO RADIO VALUES ('FM', 'Calle Altramuces', 'www.FM.com', 'fm@gmail.com', 654789321);
+INSERT INTO RADIO VALUES ('Los30', 'Calle Esparragos', 'www.los30.es', 'los30@gmail.com', 659785321);
+INSERT INTO RADIO VALUES ('BesoFm', 'Calle Pimienta', 'www.besofm.es', 'besofm@gmail.com', 654789321);
+INSERT INTO RADIO VALUES ('RadioLo', 'Calle Recorcholis', 'www.radiolo.com', 'radiolo@gmail.com', 654789321);
+
+    --Grupo
+INSERT INTO GRUPO VALUES('A',to_date('1980','YYYY'),'Islandia');
+INSERT INTO GRUPO VALUES('E',to_date('2002','YYYY'),'Filipinas');
+INSERT INTO GRUPO VALUES('O',to_date('2003','YYYY'),'Soria');
+INSERT INTO GRUPO VALUES('U',to_date('2005','YYYY'),'Tranquera');
+INSERT INTO GRUPO VALUES('I',to_date('2007','YYYY'),'Jaen');
+INSERT INTO GRUPO VALUES('Queen',to_date('1986','YYYY'),'Guiriland');
+
+
+    --Discografica
+INSERT INTO DISCOGRAFICA VALUES('Python',987412563,'Predicado tus muertos','Macedonia');
+INSERT INTO DISCOGRAFICA VALUES('Pascal',369852147,'Ma fuñigao','Marruecos');
+INSERT INTO DISCOGRAFICA VALUES('RCA',258963147,'Un resplandor y hace Pum','Maldivas');
+INSERT INTO DISCOGRAFICA VALUES('SQL',123654789,'Ehto eh una catahtrofe','Canarias');
+INSERT INTO DISCOGRAFICA VALUES('HTML',156489732,'Sa matao paco','Jaen');
+
+    --Estudio
+INSERT INTO ESTUDIO VALUES('La ramona','Calle Maria',486513975,'ESPAÑA');
+INSERT INTO ESTUDIO VALUES('Bronxtoles','Calle Alexia',986515675,'Rumania');
+INSERT INTO ESTUDIO VALUES('Medusapill','Calle Laura',886548975,'Rusia');
+INSERT INTO ESTUDIO VALUES('Screen','Calle Cristina',786363975,'Guinea');
+
+    --EmpresaGrafica
+INSERT INTO EMPRESAGRAFICA VALUES('Disenio2D','Calle Zorra','Nisu');
+INSERT INTO EMPRESAGRAFICA VALUES('Disenio3D','Calle Guarra','Latam');
+INSERT INTO EMPRESAGRAFICA VALUES('ModeladoGeom','Calle Asquerosa','Embajadores');
+INSERT INTO EMPRESAGRAFICA VALUES('Dibujo','Calle Muerte','Alcorcón');
+
+    --Vinilo
+INSERT INTO VINILO VALUES(1000000000,'Python','19/12/2012',258,'A','Disenio2D');
+INSERT INTO VINILO VALUES(1000000001,'Pascal','10/08/2009',852,'E','Disenio3D');
+INSERT INTO VINILO VALUES(1000000002,'RCA','01/07/2029',963,'O','ModeladoGeom');
+INSERT INTO VINILO VALUES(1000000003,'SQL','17/11/2045',741,'U','Dibujo');
+INSERT INTO VINILO VALUES(1000000004,'Python','19/03/1986',5987,'Queen','ModeladoGeom');
+INSERT INTO VINILO VALUES(1000000005,'HTML','07/01/2075',741,'I',NULL);
+INSERT INTO VINILO VALUES(1000000006,'SQL','09/12/2010',259,'A','Dibujo');
+INSERT INTO VINILO VALUES(1000000007,'RCA','14/02/2100',278,'E',NULL);
+
+INSERT INTO VINILO VALUES(1000000010,'Pascal','10/08/2009',852,'E','Disenio3D');
+INSERT INTO VINILO VALUES(1000000020,'RCA','01/07/2029',963,'O','ModeladoGeom');
+INSERT INTO VINILO VALUES(1000000030,'SQL','17/11/2045',741,'U','Dibujo');
+INSERT INTO VINILO VALUES(1000000040,'Python','19/03/1986',5987,'Queen','ModeladoGeom');
+INSERT INTO VINILO VALUES(1000000050,'HTML','07/01/2045',741,'I',NULL);
+
+    --LP
+INSERT INTO LP VALUES(1000000001,'Puta madre',69852);
+INSERT INTO LP VALUES(1000000002,'Quieror morir',45);
+INSERT INTO LP VALUES(1000000003,'Mátame',1657);
+INSERT INTO LP VALUES(1000000004,'Suicidio colectivo',9751);
+INSERT INTO LP VALUES(1000000005,'Aiuda pls',100000);
+
+INSERT INTO LP VALUES(1000000006,'No puc mes',1000);
+INSERT INTO LP VALUES(1000000007,'Dame veneno',17000);
+
+    --Single_V
+INSERT INTO SINGLE_V VALUES(1000000010,1000000001);
+INSERT INTO SINGLE_V VALUES(1000000020,1000000002);
+INSERT INTO SINGLE_V VALUES(1000000030,1000000003);
+INSERT INTO SINGLE_V VALUES(1000000040,1000000004);
+INSERT INTO SINGLE_V VALUES(1000000050,1000000005);
+
+
+    --Tema
+INSERT INTO TEMA VALUES(5820,'Surtido',220,'Desacato','Bronxtoles',1000000001,'B',3,1000000010,DEFAULT,1);
+INSERT INTO TEMA VALUES(3341,'Gotele',200,'Buki','La ramona',1000000002,'A',7,1000000020,'B',1);
+INSERT INTO TEMA VALUES(1470,'Tratra',210,'Kaotiont','Medusapill',1000000003,'B',11,1000000030,'A',2);
+INSERT INTO TEMA VALUES(9761,'Locura transitiva',230,'LPM','Screen',1000000005,'A',8,1000000050,DEFAULT,2);
+
+INSERT INTO TEMA VALUES(1111,'Reina',251,'Federico Mercurio','Bronxtoles',1000000004,'A',5,1000000040,'B',1); 
+INSERT INTO TEMA VALUES(4820,'Poison',220,'Desacato','Bronxtoles',1000000001,'A',4,NULL,NULL,NULL);
+INSERT INTO TEMA VALUES(2111,'Reinona',271,'Federico Mercurio','Bronxtoles',1000000004,'A',5,NULL,NULL,NULL); 
+INSERT INTO TEMA VALUES(3111,'Corazon patio',291,'Desacato','La ramona',1000000002,'A',8,NULL,NULL,NULL); 
+
+
+    --Ranking
+INSERT INTO RANKING VALUES(to_date('1900','YYYY'),12,1000000010,1000000030,1000000030);
+INSERT INTO RANKING VALUES(to_date('2015','YYYY'),52,1000000050,1000000040,1000000030);
+INSERT INTO RANKING VALUES(to_date('2025','YYYY'),37,1000000050,1000000020,1000000040);
+
+   --Emision   
+INSERT INTO EMISION VALUES(to_date('27/10/1987 21:35:04','DD/MM/YYYY HH24:MI:SS'),'FM',3341);
+INSERT INTO EMISION VALUES(to_date('09/04/2021 01:20:45','DD/MM/YYYY HH24:MI:SS'),'FM',5820);
+INSERT INTO EMISION VALUES(to_date('01/10/2022 15:02:26','DD/MM/YYYY HH24:MI:SS'),'BesoFm',1470);
+INSERT INTO EMISION VALUES(to_date('27/08/2019 09:12:39','DD/MM/YYYY HH24:MI:SS'),'RadioLo',9761);
+INSERT INTO EMISION VALUES(to_date('11/10/2022 15:02:26','DD/MM/YYYY HH24:MI:SS'),'FM',1470);
+INSERT INTO EMISION VALUES(to_date('17/08/2021 09:12:39','DD/MM/YYYY HH24:MI:SS'),'BesoFm',9761);
+INSERT INTO EMISION VALUES(to_date('30/08/2021 09:12:39','DD/MM/YYYY HH24:MI:SS'),'Los30',5820);
+INSERT INTO EMISION VALUES(to_date('27/08/2021 09:12:39','DD/MM/YYYY HH24:MI:SS'),'Los30',5820);
+INSERT INTO EMISION VALUES(to_date('07/08/2021 09:12:39','DD/MM/YYYY HH24:MI:SS'),'Los30',1470);
+
+
+
+
+
+
+
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXXX --   
+    -- XXX MODIFICACIÓN ESQUEMA XXX --
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXXX --
+
+    -- 3.1 Añada una restricción sin nombre que compruebe que los únicos países válidos para 
+    -- los Estudios de grabación son “España”, “Francia” e “Italia”. Intente actualizar los datos 
+    -- de modo que se viole dicha restricción. Elimine la restricción y vuelva a añadirla, esta 
+    -- vez con un nombre. Vuelva a intentar actualizar los datos de modo que se viole la 
+    -- restricción y compruebe las diferencias.
+
+--ALTER TABLE ESTUDIO ADD CHECK(pais_est IN('España','Francia','Italia'));
+--ALTER TABLE ESTUDIO ADD CONSTRAINT ck_pais_est CHECK(pais_est IN('España','Francia','Italia'));
+    --En los dos ocurre lo mismo, se viola el check
+    
+    --3.2 Recoja que dos emisoras de radio no pueden tener la misma URL (web). Intente insertar 
+    -- una nueva emisora con una dirección web (URL) que sea la misma que alguna ya 
+    -- insertada. Compruebe que no es posible realizarlo debido a la restricción introducida. 
+    -- Deshabilítela (SIN borrarla) e inserte de nuevo la emisora. 
+    
+--ALTER TABLE RADIO ADD CONSTRAINT web_unique UNIQUE(web);
+--INSERT INTO RADIO VALUES ('XMADIRIZ', 'Calle Gamusinos', 'www.FM.es', 'xmadriz@gmail.com', 469873168);
+
+
+    --3.3 Modifique el esquema para permitir guardar un nuevo campo obligatorio que almacene
+    -- la fecha de fundación de las radios. Compruebe si es posible. En caso negativo, 
+    -- resuélvalo (sin borrar ni los datos ni la tabla) y compruebe que la modificación ha sido 
+    -- realizada, mostrando la estructura de la tabla tras la modificación.
+
+--ALTER TABLE RADIO ADD (fechaFundacion DATE);
+--SELECT * FROM RADIO;
+
+    -- 3.4 Añada una restricción que permita que el estudio de grabación de los temas pueda ser 
+    -- desconocido.
+
+--ALTER TABLE TEMA ADD CONSTRAINT ck_estudio CHECK (estudio=NULL);
+
+
+
+
+
+
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXX --   
+    -- XXX ACTUALIZACIÓN DATOS XXX --
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXX --
+    
+    --4.1. Modifique el atributo “fechahora” de las emisiones de radio del 27/10/1987 
+    --incrementándolo en 2 minutos, al haber tenido un problema con el reloj.
+SELECT To_ChAr(fechaHora,'DD/MM/YYYY HH24:MI:SS') "FECHA" 
+FROM EMISION
+WHERE fechaHora=to_date('27/10/1987 21:35:04','DD/MM/YYYY HH24:MI:SS');
+
+UPDATE EMISION 
+SET fechaHora = fechaHora+2/1440						--Se hace así porque el tiempo va por días 1 día = 24 horas = 1440 minutos = 86400 segundos
+WHERE fechaHora=to_date('27/10/1987 21:35:04','DD/MM/YYYY HH24:MI:SS');
+
+SELECT to_char(fechaHora,'DD/MM/YYYY HH24:MI:SS') "FECHA" 
+FROM EMISION;
+
+    --4.2. Duplique el número de copias de lanzamiento para los LPs del grupo "Queen”.
+SELECT copiasLanzamiento_LP FROM LP;
+
+UPDATE LP
+SET copiasLanzamiento_LP = copiasLanzamiento_LP*2
+WHERE ISVN IN   (SELECT ISVN
+                FROM VINILO
+                WHERE grupo_v='Queen');
+
+SELECT copiasLanzamiento_LP FROM LP;
+
+    --4.3. Incremente en 100 unidades el total de copias vendidas de los vinilos producidos por la 
+    --discográfica " RCA".
+SELECT copiasVendidas_v FROM VINILO WHERE discografica ='RCA';
+    
+UPDATE VINILO
+SET copiasVendidas_v  = copiasVendidas_v + 100
+WHERE discografica ='RCA'; 
+                        
+SELECT copiasVendidas_v FROM VINILO WHERE discografica ='RCA';
+
+    --4.4. Elimine de la tabla de singles aquellos que no hayan conseguido entrar, al menos, dos 
+    --veces en el ranking, en cualquiera de las 3 posiciones.
+  
+    
+    --4.5. Elimine las estaciones de radio que no han emitido ningún tema en el año actual.
+SELECT to_char(fechaHora,'YYYY')FROM EMISION;
+
+DELETE FROM EMISION
+WHERE fechaHora NOT BETWEEN to_date('01/01/2021 00:00:00','DD/MM/YYYY HH24:MI:SS') AND to_date('01/01/2022 00:00:00','DD/MM/YYYY HH24:MI:SS');
+
+SELECT to_char(fechaHora,'YYYY')FROM EMISION;
+
+
+
+
+
+
+
+    -- XXXXXXXXXXXXXXXXXXXXXXX --   
+    -- XXX CREACIÓN VISTAS XXX --
+    -- XXXXXXXXXXXXXXXXXXXXXXX --
+
+    -- 5.1. Cree una vista que contenga el título de cada LP, el título, cara y pista de los temas que 
+    -- lo forman, ordenado por título del LP, cara y pista. Intente insertar una nueva fila en la 
+    -- vista.
+
+
+DROP VIEW LP_Ckick;
+
+CREATE VIEW LP_Ckick AS
+    (SELECT titulo_tema , cara_LP,  pista_LP
+    FROM TEMA)
+ORDER BY titulo_tema , cara_LP,  pista_LP;
+
+INSERT INTO LP_Ckick (titulo_tema , cara_LP,  pista_LP) VALUES ('Sarandonga','A',9);
+
+    -- 5.2. Cree una vista que contenga el título de cada LP y el número total de temas que tiene, 
+    -- ordenado por título.
+DROP VIEW LP_Ckick2;
+
+CREATE VIEW LP_Ckick2 AS
+    (SELECT titulo_LP , titulo_tema
+    FROM LP L JOIN TEMA T
+    ON L.ISVN = T.LP)
+ORDER BY titulo_LP;
+
+    -- 5.3. Cree una vista que contenga el nombre y el año de fundación de los grupos. Intente 
+    -- insertar un nuevo grupo en la vista. A continuación, consulte la tabla de grupos.
+DROP VIEW Grupos_Ckick;
+
+CREATE VIEW Grupos_Ckick AS
+    (SELECT nom_grupo, anyoFundacion
+    FROM GRUPO);
+
+INSERT INTO Grupos_Ckick (nom_grupo, anyoFundacion) VALUES ('HOLI',to_date('12/03/2015', 'DD/MM/YYYY'));
+
+SELECT * FROM GRUPO;
+
+
+
+
+
+
+
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXXX --   
+    -- XXX CONSULTAS SIN VISTAS XXX --
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXXX --
+
+    -- 6.1. Singles de grupos sorianos
+SELECT titulo_tema
+FROM GRUPO G JOIN VINILO V
+ON G.nom_grupo=V.grupo_v
+
+    JOIN SINGLE_V S
+    ON V.ISVN = S.ISVN
+            
+        JOIN TEMA T
+        ON S.ISVN = T.single_t
+            
+WHERE pais_grupo='Soria';
+
+
+    -- 6.2. Títulos de temas que no se han pinchado nunca en la radio.
+(SELECT titulo_tema
+FROM TEMA T LEFT JOIN EMISION E
+ON T.cod_tema = E.tema)
+
+MINUS
+
+(SELECT titulo_tema
+FROM TEMA T RIGHT JOIN EMISION E
+ON T.cod_tema = E.tema);
+
+--Esto está bien
+SELECT titulo_tema
+FROM TEMA T JOIN EMISION E
+ON t.cod_tema = E.tema
+
+	JOIN RADIO R
+	ON E.radio != R.nom_radio;
+
+
+    -- 6.3. LPs de los que no se ha sacado ningún single.
+SELECT *
+FROM LP L LEFT JOIN SINGLE_V S
+ON L.ISVN != S.ISVNLP;
+
+    -- 6.4. Duración media total de los singles.
+SELECT AVG(duracion_tema) Duracion_Media
+FROM TEMA T JOIN SINGLE_V S
+ON T.single_t = S.ISVN;
+
+
+    -- 6.5. ISVN del single, título del LP al que pertenece, número de semanas en primer lugar del 
+    -- ránking durante el año 1990
+SELECT L.ISVN, titulo_LP, COUNT(primero_r) Veces_Primero_1900
+FROM RANKING R JOIN SINGLE_V S
+ON R.primero_r = S.ISVN
+
+    JOIN LP L
+    ON S.ISVNLP = L.estudio
+
+WHERE anyo_r =to_date('1900', 'YYYY')
+GROUP BY L.ISVN, titulo_LP;
+
+    -- 6.6. Número de temas pinchados por cada emisora en el año actual.
+SELECT COUNT(cod_tema) Num_Temas_Emitidos, nom_radio
+FROM TEMA T LEFT JOIN EMISION E
+ON T.cod_tema = E.tema
+
+    JOIN RADIO R
+    ON E.radio = R.nom_radio
+
+WHERE fechaHora NOT BETWEEN to_date('01/01/2021 00:00:00','DD/MM/YYYY HH24:MI:SS') AND to_date('01/01/2022 00:00:00','DD/MM/YYYY HH24:MI:SS')
+GROUP BY nom_radio;
+
+    -- 6.7. Nacionalidades de los tres grupos que han publicado más vinilos en total.
+SELECT RANK() OVER (ORDER BY pais_grupo) Num, pais_grupo, COUNT(grupo_v) Vinilos_Totales
+FROM GRUPO G JOIN VINILO V
+ON nom_grupo = grupo_v
+GROUP BY pais_grupo FETCH FIRST 3 ROWS ONLY;
+
+    -- 6.8. Grupo más escuchado en este último año. 
+SELECT DISTINCT grupo_v, copiasVendidas_v
+FROM VINILO
+WHERE copiasVendidas_v = (SELECT MAX(copiasVendidas_v ) 
+                          FROM VINILO);
+
+    -- 6.9. Nombre del grupo que menos se ha escuchado en las emisoras españolas. Suponga 
+    -- que las emisoras españolas son las que su dirección web pertenece a un dominio “.es”.
+SELECT  nom_grupo, COUNT(grupo_v) Veces_Emitido
+FROM GRUPO JOIN VINILO V
+ON nom_grupo = grupo_v
+
+    JOIN TEMA 
+    ON V.ISVN  = single_t
+    
+        JOIN EMISION 
+        ON cod_tema = tema
+        
+            JOIN RADIO 
+            ON radio = nom_radio
+
+WHERE web LIKE '%.es'
+GROUP BY nom_grupo;
+
+    -- 6.10. Grupos cuyos vinilos están producidos por discográficas de su misma nacionalidad.
+SELECT DISTINCT nom_grupo
+FROM GRUPO JOIN VINILO V
+ON nom_grupo = grupo_v
+
+    JOIN DISCOGRAFICA
+    ON V.discografica = nom_dis
+
+WHERE pais_grupo = pais_dis;
+
+
+
+
+
+
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXXX --   
+    -- XXX MODIFICACIÓN ESQUEMA XXX --
+    -- XXXXXXXXXXXXXXXXXXXXXXXXXXXX --
+
+    -- 7.1. Suponga que queremos incluir información de los miembros que forman los grupos. 
+    -- Añada una tabla con la información de los miembros (Código, nombre, fecha y país de 
+    -- nacimiento). Piense en las soluciones en el caso de que: cada miembro pertenezca a 
+    -- un único grupo, sin posibilidad de cambiar de grupo; los grupos van cambiando de 
+    -- composición, incorporándose unos miembros y desvinculándose otros.
+
+
+CREATE TABLE MIEMBRO(
+    nom_grupo VARCHAR2(20) NULL,    -- o NOT NULL
+    nombre_mi VARCHAR2(20) NOT NULL,
+    fecha_nac DATE NOT NULL,
+    pais_nac VARCHAR2(20) NOT NULL,
+    
+    CONSTRAINT pk_nom_grupo PRIMARY KEY (nom_grupo),
+    
+    CONSTRAINT fk_nom_grupo FOREIGN KEY (nom_grupo) REFERENCES GRUPO
+        ON DELETE SET NULL  --En un caso
+      --ON DELETE CASCADE      EN OTRO CASO
+);
+    
+    -- 7.2. En la solución actual únicamente se guardan los tres primeros puestos del ranking
+    -- semanal. ¿Cómo modificaría el esquema para incorporar más puestos?
+ALTER TABLE RANKING ADD (cuarto_r NUMBER(10) NOT NULL);
+ALTER TABLE RANKING ADD CONSTRAINT pk_cuarto_r FOREIGN KEY (cuarto_r) REFERENCES SINGLE_V(ISVN) ON DELETE CASCADE;
+
+    -- 7.3. ¿Cómo modificaría el esquema para permitir que existieran vinilos en los que 
+    -- participaran varios grupos, así como eliminar la restricción de que un tema sólo pudiera 
+    -- aparecer en un LP y single?
+ALTER TABLE VINILO MODIFY (grupo_v VARCHAR2(20) NULL);
+
+CREATE TABLE COLABO(
+    ISVN NUMBER(10) NOT NULL,
+    g1 VARCHAR2(20) NOT NULL,
+    g2 VARCHAR2(20) NOT NULL,
+    g3 VARCHAR2(20) NULL,
+    g4 VARCHAR2(20) NULL,
+    g5 VARCHAR2(20) NULL,
+    
+    CONSTRAINT pk_ISVN PRIMARY KEY (ISVN),
+    
+    CONSTRAINT fk_ISVN FOREIGN KEY (ISVN) REFERENCES VINILO(ISVN)
+        ON DELETE CASCADE
+);
+
+    -- 7.4. ¿Podríamos recoger en la solución del apartado 7.3, que el mismo tema apareciera con 
+    -- distintas interpretaciones y, por tanto, distintas duraciones (por ejemplo, en directo y en 
+    -- estudio)? En caso negativo, ¿cómo modificaría el esquema para permitirlo?
+ALTER TABLE TEMA DROP CONSTRAINT ck_lp_single;      -- No deja poner delete no sé por qué
+
+    -- 7.5. En el diseño actual un single siempre pertenece a un LP. Esto se recoge por medio de 
+    -- la clave ajena ISVNLP de la tabla SINGLE. Sin embargo, ¿podría ocurrir que los temas 
+    -- contenidos en el single no pertenecieran a dicho LP? Piense alguna solución.
+ALTER TABLE SINGLE_V MODIFY (ISVNLP NUMBER(10) NULL);
+ALTER TABLE SINGLE_V DROP CONSTRAINT fk_isvnlp_s;
+
+ALTER TABLE SINGLE_V ADD CONSTRAINT fk_isvnlp_s FOREIGN KEY (ISVNLP) REFERENCES LP (ISVN)
+                            ON DELETE SET NULL;
+
+    -- 7.6. En la tabla Tema se almacenan tanto el LP como el single en el que aparecen. Dado 
+    -- que la mayoría de los temas no aparecerán en ningún single, ¿cómo modificaría el 
+    -- esquema para evitar tantos valores nulos en la tabla Tema?
+ALTER TABLE TEMA DROP CONSTRAINT ck_null;
+ALTER TABLE TEMA DROP (cara_single);
+ALTER TABLE TEMA DROP (pista_single);
+
+ALTER TABLE SINGLE_V ADD (cara_single CHAR(1) DEFAULT 'A' NULL, pista_single NUMBER(1) NULL);
+    
+    
